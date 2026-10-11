@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#07070c">
+<title>Тенеход</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Spectral:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07070c; --bg2:#0d0b18; --panel:#12101f; --panel2:#1a1630;
+    --line:#2a2247; --gold:#d9b45a; --gold2:#f3d98b;
+    --purple:#8b5cf6; --purple2:#b794ff;
+    --red:#e0505a; --green:#5fd68a; --blue:#5fa8e0;
+    --txt:#d8d2e8; --dim:#8a82a8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+    font-family:'Spectral',serif;overflow-x:hidden;}
+  #bg-layer{position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(139,92,246,.18), transparent 55%),
+      radial-gradient(ellipse at 85% 110%, rgba(217,180,90,.10), transparent 55%),
+      radial-gradient(circle at 50% 50%, #0d0b18 0%, #07070c 70%);}
+  #stars{position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.35), transparent),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.25), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(183,148,255,.30), transparent),
+      radial-gradient(1px 1px at 85% 20%, rgba(243,217,139,.30), transparent),
+      radial-gradient(1px 1px at 10% 65%, rgba(255,255,255,.20), transparent),
+      radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,.22), transparent);
+    will-change:background-position;
+    animation:drift 90s linear infinite;}
+  @keyframes drift{from{background-position:0 0;}to{background-position:0 -400px;}}
+  #game{position:relative;z-index:1;max-width:820px;margin:0 auto;
+    padding:clamp(10px,2.5vw,22px);min-height:100vh;}
+  h1,h2,h3,.menu-btn,.topbar-title,.btn{font-family:'Cinzel',serif;letter-spacing:.5px;}
+
+  .screen{display:none;}
+  .screen.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  #screen-menu{text-align:center;padding-top:clamp(20px,6vh,60px);}
+  .title{font-size:clamp(34px,10vw,64px);font-weight:700;
+    background:linear-gradient(180deg,var(--gold2),var(--gold) 60%,#8a6a20);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 34px rgba(217,180,90,.28);margin:0 0 6px;}
+  .subtitle{color:var(--dim);font-style:italic;font-size:clamp(13px,3.6vw,16px);
+    margin:0 0 clamp(20px,5vh,40px);
+    -webkit-user-select:none;user-select:none;cursor:default;}
+  .menu-btns{display:flex;flex-direction:column;gap:12px;max-width:340px;margin:0 auto;}
+  .menu-btn{min-height:52px;padding:14px 22px;font-size:clamp(15px,4vw,18px);
+    color:var(--txt);background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:12px;cursor:pointer;
+    transition:border-color .12s ease, color .12s ease, background .12s ease;
+    position:relative;overflow:hidden;touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;}
+  .menu-btn:hover{border-color:var(--gold);color:var(--gold2);}
+  .menu-btn:active{border-color:var(--gold2);color:var(--gold2);
+    background:linear-gradient(180deg,#241d47,#1a1630);}
+
+  .cloud-status{max-width:340px;margin:0 auto 14px;padding:8px 14px;
+    border:1px solid var(--line);border-radius:10px;
+    font-size:clamp(11px,3vw,13px);color:var(--dim);text-align:center;
+    font-family:'Cinzel',serif;transition:border-color .3s,color .3s;}
+  .cloud-status.online{border-color:var(--green);color:var(--green);}
+  .cloud-status.saving{border-color:var(--gold);color:var(--gold);}
+  .cloud-status.error{border-color:var(--red);color:var(--red);}
+  .cloud-status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:currentColor;margin-right:6px;vertical-align:middle;}
+
+  .user-key-box{max-width:340px;margin:0 auto 14px;padding:10px 14px;
+    border:1px dashed var(--line);border-radius:10px;font-size:clamp(10px,2.8vw,12px);
+    color:var(--dim);word-break:break-all;text-align:center;font-family:monospace;}
+  .user-key-box b{color:var(--gold);display:block;margin-bottom:4px;
+    font-family:'Cinzel',serif;font-size:clamp(11px,3vw,13px);}
+
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;
+    padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .btn{min-height:44px;padding:10px 16px;font-size:clamp(13px,3.4vw,15px);
+    color:var(--txt);background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:10px;cursor:pointer;
+    transition:border-color .12s ease, color .12s ease, background .12s ease;
+    touch-action:manipulation;-webkit-user-select:none;user-select:none;
+    -webkit-touch-callout:none;}
+  .btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold2);}
+  .btn:active:not(:disabled){border-color:var(--gold2);color:var(--gold2);
+    background:linear-gradient(180deg,#241d47,#1a1630);transform:scale(.97);
+    transition:transform .05s ease;}
+  .btn:disabled{opacity:.38;cursor:not-allowed;}
+  .btn.danger{border-color:#5a1f28;color:#ff9b9b;}
+  .btn.danger:hover:not(:disabled){border-color:var(--red);color:#ffb9b9;}
+  .btn.back{flex-shrink:0;padding:10px 14px;}
+  .btn.big{width:100%;min-height:52px;font-size:clamp(14px,3.8vw,17px);
+    font-family:'Cinzel',serif;}
+  .btn.small{min-height:36px;padding:6px 10px;font-size:clamp(11px,3vw,13px);}
+  .topbar-title{flex:1;text-align:center;font-size:clamp(15px,4.2vw,20px);
+    color:var(--gold2);font-weight:600;}
+  .topbar-spacer{width:64px;flex-shrink:0;}
+
+  .panel{background:rgba(20,17,36,.82);border:1px solid var(--line);
+    border-radius:14px;padding:clamp(12px,3.5vw,20px);margin-bottom:14px;}
+  .panel h3{margin:0 0 12px;font-size:clamp(14px,3.8vw,17px);color:var(--gold2);font-weight:600;}
+
+  .story-text{font-size:clamp(14px,4vw,17px);line-height:1.65;margin:0 0 18px;color:var(--txt);}
+  .choice{display:block;width:100%;text-align:left;min-height:48px;margin-bottom:10px;}
+
+  .arena{position:relative;display:grid;grid-template-columns:1fr auto 1fr;
+    gap:clamp(6px,2vw,16px);align-items:center;padding:clamp(10px,3vw,20px) 0;}
+  .fighter{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .avatar{width:clamp(64px,18vw,96px);height:clamp(64px,18vw,96px);
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:clamp(30px,8vw,46px);border:2px solid var(--line);
+    background:radial-gradient(circle at 35% 30%,var(--panel2),var(--bg2));
+    transition:border-color .15s ease;position:relative;}
+  .avatar.player{border-color:var(--purple);box-shadow:0 0 24px rgba(139,92,246,.30);}
+  .avatar.foe{border-color:var(--red);box-shadow:0 0 24px rgba(224,80,90,.28);}
+  .avatar.foe.elite{border-color:var(--gold);box-shadow:0 0 28px rgba(217,180,90,.40);}
+  .avatar.foe.boss{border-color:var(--red);box-shadow:0 0 34px rgba(224,80,90,.55);
+    animation:pulseBoss 1.6s ease-in-out infinite;}
+  @keyframes pulseBoss{50%{box-shadow:0 0 50px rgba(224,80,90,.85);}}
+  .avatar.hit{animation:hitShake .22s ease;}
+  @keyframes hitShake{0%,100%{transform:none;}25%{transform:translateX(-5px);}
+    75%{transform:translateX(5px);}}
+  .fname{font-family:'Cinzel',serif;font-size:clamp(12px,3.4vw,15px);
+    color:var(--txt);text-align:center;}
+  .foe-tag{font-size:clamp(10px,2.8vw,12px);color:var(--gold);font-style:italic;}
+  .mini-bar{width:clamp(70px,20vw,110px);height:8px;background:#1a1428;
+    border-radius:4px;overflow:hidden;border:1px solid var(--line);}
+  .mini-fill{height:100%;width:100%;transition:width .2s ease;
+    background:linear-gradient(90deg,var(--red),#ff8b8b);}
+  .mini-fill.p{background:linear-gradient(90deg,var(--purple),var(--purple2));}
+  .vs{font-family:'Cinzel',serif;font-size:clamp(16px,4.6vw,22px);color:var(--gold);
+    text-shadow:0 0 18px rgba(217,180,90,.55);animation:pulseVS 2.4s ease-in-out infinite;}
+  @keyframes pulseVS{50%{opacity:.65;transform:scale(.96);}}
+
+  .float-dmg{position:absolute;font-family:'Cinzel',serif;font-weight:700;
+    font-size:clamp(15px,4.2vw,20px);pointer-events:none;z-index:5;
+    animation:floatUp .9s ease forwards;text-shadow:0 0 12px currentColor;
+    will-change:transform,opacity;}
+  @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}
+    100%{opacity:0;transform:translateY(-52px) scale(1.25);}}
+
+  .bar-wrap{margin-bottom:8px;}
+  .bar-lbl{display:flex;justify-content:space-between;font-size:clamp(11px,3vw,13px);
+    color:var(--dim);margin-bottom:3px;font-family:'Cinzel',serif;}
+  .bar{height:clamp(14px,4vw,18px);background:#12101f;border:1px solid var(--line);
+    border-radius:9px;overflow:hidden;position:relative;}
+  .bar-fill{height:100%;transition:width .28s ease;border-radius:8px;will-change:width;}
+  #hp-fill{background:linear-gradient(90deg,#8a1e28,var(--red),#ff9b9b);}
+  #mp-fill{background:linear-gradient(90deg,#1e3a8a,var(--blue),#9bd0ff);}
+  #xp-fill{background:linear-gradient(90deg,#5a4410,var(--gold),var(--gold2));}
+
+  .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));
+    gap:8px;margin-bottom:12px;}
+  .stat-cell{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:8px 6px;text-align:center;}
+  .stat-cell .lbl{font-size:clamp(9px,2.6vw,11px);color:var(--dim);
+    text-transform:uppercase;letter-spacing:.5px;font-family:'Cinzel',serif;}
+  .stat-cell .val{font-size:clamp(14px,3.8vw,17px);color:var(--gold2);
+    font-family:'Cinzel',serif;font-weight:600;}
+
+  .log{height:clamp(120px,24vh,180px);overflow-y:auto;background:#0a0812;
+    border:1px solid var(--line);border-radius:10px;padding:10px;font-size:clamp(12px,3.2vw,14px);
+    line-height:1.55;margin-bottom:12px;-webkit-overflow-scrolling:touch;}
+  .log p{margin:0 0 4px;}
+  .c-dmg{color:#ff8b8b;} .c-heal{color:var(--green);} .c-gold{color:var(--gold2);}
+  .c-sys{color:var(--dim);font-style:italic;} .c-crit{color:#ffbe3d;font-weight:700;}
+  .c-loot{color:var(--purple2);} .c-level{color:var(--gold2);font-weight:700;}
+  .c-elite{color:var(--gold);} .c-boss{color:var(--red);font-weight:700;}
+
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .actions .btn{min-height:48px;font-family:'Cinzel',serif;}
+
+  .shop-item{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;
+    background:rgba(18,16,31,.6);}
+  .shop-info{flex:1;min-width:0;}
+  .shop-name{font-family:'Cinzel',serif;color:var(--gold2);font-size:clamp(13px,3.5vw,15px);}
+  .shop-desc{font-size:clamp(11px,3vw,13px);color:var(--dim);}
+  .shop-price{color:var(--gold);font-family:'Cinzel',serif;white-space:nowrap;}
+  .buy-btn{min-height:44px;padding:8px 14px;font-size:clamp(12px,3.2vw,14px);}
+
+  .branch{margin-bottom:16px;}
+  .branch-title{font-family:'Cinzel',serif;color:var(--gold2);font-size:clamp(14px,3.8vw,16px);
+    margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+  .skill{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;
+    background:rgba(18,16,31,.5);}
+  .skill.owned{border-color:var(--gold);background:rgba(217,180,90,.07);}
+  .skill-info{flex:1;min-width:0;}
+  .skill-name{font-family:'Cinzel',serif;color:var(--txt);font-size:clamp(12px,3.4vw,14px);}
+  .skill-desc{font-size:clamp(10px,2.8vw,12px);color:var(--dim);}
+  .skill-btn{min-height:40px;padding:6px 12px;font-size:clamp(11px,3vw,13px);}
+
+  .equip-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+  .slot{border:1px dashed var(--line);border-radius:10px;padding:10px;text-align:center;
+    min-height:80px;display:flex;flex-direction:column;justify-content:center;gap:4px;}
+  .slot.filled{border-style:solid;border-color:var(--purple);}
+  .slot-lbl{font-size:clamp(9px,2.6vw,11px);color:var(--dim);text-transform:uppercase;
+    font-family:'Cinzel',serif;}
+  .slot-item{font-size:clamp(11px,3vw,13px);color:var(--gold2);font-family:'Cinzel',serif;}
+  .slot-icon{font-size:clamp(20px,6vw,26px);}
+  .inv-item{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;
+    background:rgba(18,16,31,.5);}
+  .inv-item.rar-common{border-left:3px solid #6a6480;}
+  .inv-item.rar-rare{border-left:3px solid var(--blue);}
+  .inv-item.rar-epic{border-left:3px solid var(--purple);}
+  .inv-item.rar-legendary{border-left:3px solid var(--gold);
+    box-shadow:0 0 14px rgba(217,180,90,.18);}
+  .inv-name{font-family:'Cinzel',serif;font-size:clamp(12px,3.4vw,14px);color:var(--gold2);}
+  .inv-bonus{font-size:clamp(10px,2.8vw,12px);color:var(--dim);}
+  .inv-btn{min-height:40px;padding:6px 12px;font-size:clamp(11px,3vw,13px);}
+
+  .doc{font-size:clamp(13px,3.6vw,15px);line-height:1.7;color:var(--txt);}
+  .doc h3{color:var(--gold2);font-family:'Cinzel',serif;margin:18px 0 8px;
+    font-size:clamp(14px,3.8vw,17px);}
+  .doc ul{padding-left:20px;margin:8px 0;}
+  .doc li{margin-bottom:6px;}
+  .doc b{color:var(--gold);}
+
+  .empty-note{color:var(--dim);font-style:italic;text-align:center;padding:16px;}
+
+  .ending-title{font-family:'Cinzel',serif;font-size:clamp(24px,7vw,40px);
+    color:var(--gold2);text-align:center;margin:24px 0 16px;
+    text-shadow:0 0 30px rgba(217,180,90,.35);}
+  .ending-text{font-size:clamp(14px,4vw,17px);line-height:1.75;text-align:center;
+    font-style:italic;color:var(--txt);margin-bottom:24px;}
+
+  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;
+    display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-back.active{display:flex;}
+  .modal{background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--gold);border-radius:14px;padding:20px;
+    max-width:400px;width:100%;box-shadow:0 0 40px rgba(217,180,90,.25);}
+  .modal h3{color:var(--gold2);font-family:'Cinzel',serif;margin:0 0 12px;
+    font-size:clamp(15px,4vw,18px);}
+  .modal p{font-size:clamp(13px,3.5vw,15px);line-height:1.6;margin:0 0 16px;}
+  .modal input{width:100%;padding:12px;margin-bottom:12px;background:#0a0812;
+    border:1px solid var(--line);border-radius:10px;color:var(--txt);
+    font-family:'Spectral',serif;font-size:clamp(14px,3.6vw,16px);}
+  .modal input:focus{outline:none;border-color:var(--gold);}
+  .modal-btns{display:flex;flex-direction:column;gap:10px;}
+
+  /* ===== ADMIN ===== */
+  #screen-admin{font-family:monospace;}
+  #screen-admin .topbar-title{font-family:'Cinzel',serif;color:var(--red);}
+  .admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));
+    gap:8px;margin-bottom:14px;}
+  .admin-stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:10px;text-align:center;}
+  .admin-stat .lbl{font-size:11px;color:var(--dim);text-transform:uppercase;
+    font-family:'Cinzel',serif;margin-bottom:4px;}
+  .admin-stat .val{font-size:clamp(15px,4vw,19px);color:var(--gold2);
+    font-family:'Cinzel',serif;font-weight:600;}
+  .admin-search{display:flex;gap:8px;margin-bottom:12px;}
+  .admin-search input{flex:1;padding:10px;background:#0a0812;border:1px solid var(--line);
+    border-radius:10px;color:var(--txt);font-size:13px;font-family:monospace;}
+  .admin-search input:focus{outline:none;border-color:var(--gold);}
+  .save-row{background:rgba(18,16,31,.6);border:1px solid var(--line);
+    border-radius:10px;padding:12px;margin-bottom:8px;font-size:12px;}
+  .save-row .uk{color:var(--gold);word-break:break-all;font-size:11px;
+    margin-bottom:6px;display:block;}
+  .save-row .meta{color:var(--dim);font-size:11px;margin-bottom:8px;
+    display:flex;flex-wrap:wrap;gap:8px;}
+  .save-row .meta b{color:var(--gold2);}
+  .save-actions{display:flex;flex-wrap:wrap;gap:6px;}
+  .save-actions .btn{min-height:32px;padding:5px 9px;font-size:11px;
+    font-family:monospace;}
+
+  @media(min-width:600px){.actions{grid-template-columns:repeat(4,1fr);}}
+  @media (prefers-reduced-motion: reduce){
+    #stars{animation:none;} .vs{animation:none;}
+    .avatar.foe.boss{animation:none;} .screen.active{animation:none;}
+  }
+</style>
+</head>
+<body>
+<div id="bg-layer"></div>
+<div id="stars"></div>
+
+<div class="modal-back" id="modal-back">
+  <div class="modal">
+    <h3 id="modal-title">—</h3>
+    <p id="modal-text">—</p>
+    <div id="modal-extra"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+
+<div id="game">
+
+  <div class="screen active" id="screen-menu">
+    <h1 class="title">Тенеход</h1>
+    <p class="subtitle" id="subtitle-secret">Тьма помнит каждого, кто в неё вошёл</p>
+    <div class="cloud-status" id="cloud-status">
+      <span class="dot"></span><span id="cloud-text">облако: проверка...</span>
+    </div>
+    <div class="menu-btns">
+      <button class="menu-btn" onclick="startStory()">Новая история</button>
+      <button class="menu-btn" onclick="continueGame()" id="btn-continue" style="display:none">Продолжить</button>
+      <button class="menu-btn" onclick="cloudLoad()">Загрузить из облака</button>
+      <button class="menu-btn" onclick="cloudSave()">Сохранить в облако</button>
+      <button class="menu-btn" onclick="nav('help')">Как играть</button>
+      <button class="menu-btn" onclick="nav('about')">Об игре</button>
+    </div>
+    <div class="user-key-box" id="user-key-box" style="margin-top:20px;">
+      <b>Твой ключ синхронизации</b>
+      <span id="user-key-display">—</span>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-story">
+    <div class="topbar">
+      <button class="btn back" onclick="nav('menu')">← Назад</button>
+      <div class="topbar-title" id="story-title">Пролог</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="panel">
+      <div class="story-text" id="story-text"></div>
+      <div id="story-choices"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-game">
+    <div class="topbar">
+      <button class="btn back" onclick="nav('menu')">← Назад</button>
+      <div class="topbar-title" id="loc-name">Тёмный лес</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="strip">
+      <div class="stat-cell"><div class="lbl">Уровень</div><div class="val" id="st-lvl">1</div></div>
+      <div class="stat-cell"><div class="lbl">ATK</div><div class="val" id="st-atk">10</div></div>
+      <div class="stat-cell"><div class="lbl">DEF</div><div class="val" id="st-def">5</div></div>
+      <div class="stat-cell"><div class="lbl">Золото</div><div class="val" id="st-gold">0</div></div>
+      <div class="stat-cell"><div class="lbl">Очки</div><div class="val" id="st-sp">0</div></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-lbl"><span>HP</span><span id="hp-val">100 / 100</span></div>
+      <div class="bar"><div class="bar-fill" id="hp-fill" style="width:100%"></div></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-lbl"><span>MP</span><span id="mp-val">20 / 20</span></div>
+      <div class="bar"><div class="bar-fill" id="mp-fill" style="width:100%"></div></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-lbl"><span>XP</span><span id="xp-val">0 / 30</span></div>
+      <div class="bar"><div class="bar-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+    <div class="panel">
+      <div class="arena" id="arena">
+        <div class="fighter">
+          <div class="avatar player" id="player-av">🗡️</div>
+          <div class="fname">Тенеход</div>
+          <div class="mini-bar"><div class="mini-fill p" id="player-mini" style="width:100%"></div></div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="fighter">
+          <div class="avatar foe" id="foe-av">👤</div>
+          <div class="fname" id="foe-name">—</div>
+          <div class="foe-tag" id="foe-tag"></div>
+          <div class="mini-bar"><div class="mini-fill" id="foe-mini" style="width:100%"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="log" id="log"></div>
+    <div class="actions" id="actions"></div>
+  </div>
+
+  <div class="screen" id="screen-shop">
+    <div class="topbar">
+      <button class="btn back" onclick="nav('game')">← Назад</button>
+      <div class="topbar-title">Лавка торговца</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="panel">
+      <h3>Золото: <span id="shop-gold">0</span></h3>
+      <div id="shop-list"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-skills">
+    <div class="topbar">
+      <button class="btn back" onclick="nav('game')">← Назад</button>
+      <div class="topbar-title">Древо навыков</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="panel">
+      <h3>Очки навыков: <span id="skill-points">0</span></h3>
+      <div id="skill-tree"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-inventory">
+    <div class="topbar">
+      <button class="btn back" onclick="nav('game')">← Назад</button>
+      <div class="topbar-title">Инвентарь</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="panel">
+      <h3>Экипировка</h3>
+      <div class="equip-slots">
+        <div class="slot" id="slot-weapon"><div class="slot-lbl">Оружие</div><div class="slot-icon">⚔️</div><div class="slot-item">—</div></div>
+        <div class="slot" id="slot-armor"><div class="slot-lbl">Броня</div><div class="slot-icon">🛡️</div><div class="slot-item">—</div></div>
+        <div class="slot" id="slot-amulet"><div class="slot-lbl">Амулет</div><div class="slot-icon">📿</div><div class="slot-item">—</div></div>
+      </div>
+      <h3>Сумка</h3>
+      <div id="inventory-list"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-help">
+    <div class="topbar">
+      <button class="btn back" onclick="nav('menu')">← Назад</button>
+      <div class="topbar-title">Как играть</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="panel doc">
+      <h3>Цель</h3>
+      <p>Пройти три акта истории, победить боссов каждой локации и выбрать одну из трёх концовок.</p>
+      <h3>Бой</h3>
+      <ul>
+        <li><b>Атака</b> — обычный удар, зависит от ATK.</li>
+        <li><b>Магия</b> — 5 MP, двойной урон, игнорирует половину DEF.</li>
+        <li><b>Зелье HP</b> — восстанавливает 40 HP.</li>
+        <li><b>Крит</b> — базовый 15%, множитель 1.8.</li>
+        <li><b>Уклонение</b> — шанс избежать удара.</li>
+        <li><b>Вампиризм</b> — возвращает часть урона как HP.</li>
+      </ul>
+      <h3>Сохранения</h3>
+      <p>Прогресс автосохраняется локально и в облако. Кнопки <b>«Сохранить/Загрузить»</b> в меню — ручной синк.</p>
+      <h3>Прогрессия</h3>
+      <ul>
+        <li>Каждый уровень даёт +1 очко навыка.</li>
+        <li>После 10 убийств в акте появляется босс.</li>
+        <li>Элиты (шанс 12%) дают х2 награду и дроп 55%.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-about">
+    <div class="topbar">
+      <button class="btn back" onclick="nav('menu')">← Назад</button>
+      <div class="topbar-title">Об игре</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="panel doc">
+      <h3>Тенеход</h3>
+      <p>Тёмное фэнтези, пошаговая RPG. Работает офлайн, синхронизируется с облаком при наличии сети.</p>
+      <p>Хранилище: Supabase (Postgres). Локально: localStorage.</p>
+      <p style="color:var(--dim);font-style:italic;margin-top:20px;">Тьма помнит каждого, кто в неё вошёл.</p>
+    </div>
+  </div>
+
+  <!-- ============ ADMIN ============ -->
+  <div class="screen" id="screen-admin">
+    <div class="topbar">
+      <button class="btn back" onclick="adminExit()">← Выход</button>
+      <div class="topbar-title">⚠ АДМИН-ПАНЕЛЬ</div>
+      <div class="topbar-spacer"></div>
+    </div>
+
+    <div class="admin-stats">
+      <div class="admin-stat"><div class="lbl">Сейвов</div><div class="val" id="adm-total">0</div></div>
+      <div class="admin-stat"><div class="lbl">Сумма золота</div><div class="val" id="adm-gold">0</div></div>
+      <div class="admin-stat"><div class="lbl">Макс. ур.</div><div class="val" id="adm-maxlvl">0</div></div>
+    </div>
+
+    <div class="panel">
+      <h3>Действия</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button class="btn" onclick="adminLoadAll()">↻ Обновить список</button>
+        <button class="btn" onclick="adminExport()">⬇ Экспорт JSON</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Поиск по user_key</h3>
+      <div class="admin-search">
+        <input id="adm-search" placeholder="вставь ключ или часть" oninput="adminFilter()">
+        <button class="btn small" onclick="document.getElementById('adm-search').value='';adminFilter()">×</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Сейвы <span id="adm-shown" style="color:var(--dim);font-weight:400;">(0)</span></h3>
+      <div id="adm-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   ТЕНЕХОД v3 — админ-панель
+   ============================================================ */
+
+const SUPABASE_URL = 'https://vcmrqebkqkddeivisdpc.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_nf8etXV9gdb553LFRYhsLw_scPOEZp9';
+const SAVE_KEY = 'тенеход_user_key_v1';
+
+// ---------- ADMIN ----------
+const ADMIN_PASSWORD = 'shadow2024';
+const ADMIN_SECRET = 'shadow_admin_secret_change_me';
+let IS_ADMIN = false;
+let ADMIN_CACHE = [];
+let ADMIN_FILTER = '';
+
+// ---------- CLOUD ----------
+let CLOUD = {
+  userKey: null,
+  status: 'checking',
+  lastSync: null,
+  syncing: false
+};
+
+function initCloud(){
+  let k = localStorage.getItem(SAVE_KEY);
+  if (!k){
+    k = crypto.randomUUID ? crypto.randomUUID() :
+        'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    localStorage.setItem(SAVE_KEY, k);
+  }
+  CLOUD.userKey = k;
+  const el = document.getElementById('user-key-display');
+  if (el) el.textContent = k;
+  setCloudStatus('checking', 'облако: проверка...');
+  pingCloud();
+}
+
+function setCloudStatus(state, text){
+  CLOUD.status = state;
+  const el = document.getElementById('cloud-status');
+  const tx = document.getElementById('cloud-text');
+  if (el) el.className = 'cloud-status ' + (state === 'online' ? 'online' :
+    state === 'saving' ? 'saving' : state === 'error' ? 'error' : '');
+  if (tx) tx.textContent = text || ('облако: ' + state);
+}
+
+async function cloudRequest(method, path, body, extraHeaders){
+  const url = SUPABASE_URL + '/rest/v1/' + path;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json',
+    'x-user-key': CLOUD.userKey,
+    'Prefer': 'return=representation'
+  };
+  if (extraHeaders) Object.assign(headers, extraHeaders);
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok){
+    const txt = await res.text();
+    throw new Error(res.status + ': ' + txt);
+  }
+  const ct = res.headers.get('content-type') || '';
+  if (ct.includes('json')) return await res.json();
+  return null;
+}
+
+async function adminRequest(method, path, body){
+  return cloudRequest(method, path, body, { 'x-admin-key': ADMIN_SECRET });
+}
+
+async function pingCloud(){
+  if (!navigator.onLine){ setCloudStatus('error', 'облако: оффлайн'); return; }
+  try {
+    await cloudRequest('GET', 'saves?select=user_key&limit=1');
+    setCloudStatus('online', 'облако: подключено');
+    updateContinueButton();
+  } catch(e){
+    setCloudStatus('error', 'облако: ' + (e.message || 'ошибка').slice(0, 60));
+  }
+}
+
+async function cloudSave(silent){
+  if (CLOUD.syncing) return;
+  if (!navigator.onLine){ if (!silent) toast('Нет сети'); return; }
+  CLOUD.syncing = true;
+  if (!silent) setCloudStatus('saving', 'облако: сохраняю...');
+  try {
+    const data = serializeState();
+    await cloudRequest('POST', 'saves', [{ user_key: CLOUD.userKey, data }], {
+      'Prefer': 'resolution=merge-duplicates,return=representation'
+    });
+    setCloudStatus('online', 'облако: сохранено');
+    CLOUD.lastSync = Date.now();
+    if (!silent) toast('Сохранено в облако');
+  } catch(e){
+    setCloudStatus('error', 'облако: ' + (e.message || 'ошибка').slice(0, 60));
+    if (!silent) toast('Ошибка сохранения');
+  } finally {
+    CLOUD.syncing = false;
+  }
+}
+
+async function cloudLoad(){
+  if (!navigator.onLine){ toast('Нет сети'); return; }
+  setCloudStatus('saving', 'облако: загружаю...');
+  try {
+    const rows = await cloudRequest('GET', 'saves?select=data,updated_at&user_key=eq.' + encodeURIComponent(CLOUD.userKey));
+    if (!rows || !rows.length){
+      setCloudStatus('online', 'облако: пусто');
+      toast('В облаке нет сейва');
+      return;
+    }
+    applySave(rows[0].data);
+    setCloudStatus('online', 'облако: загружено');
+    toast('Загружено из облака');
+    nav('menu');
+    updateContinueButton();
+  } catch(e){
+    setCloudStatus('error', 'облако: ' + (e.message || 'ошибка').slice(0, 60));
+    toast('Ошибка загрузки');
+  }
+}
+
+function serializeState(){ return JSON.parse(JSON.stringify(S)); }
+function applySave(data){
+  if (!data || typeof data !== 'object') return;
+  Object.keys(S).forEach(k => { if (k in data) S[k] = data[k]; });
+}
+
+// ---------- LOCAL SAVE ----------
+const LOCAL_KEY = 'тенеход_local_save_v1';
+
+function localSave(){
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(S)); } catch(e){}
+}
+function localLoad(){
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (!raw) return false;
+    applySave(JSON.parse(raw));
+    return true;
+  } catch(e){ return false; }
+}
+function localHasSave(){ return !!localStorage.getItem(LOCAL_KEY); }
+
+function continueGame(){
+  if (localLoad()){
+    nav('game'); updateUI(); buildActions(); clearLog();
+    log('Прогресс восстановлен локально.', 'c-sys');
+  } else toast('Нет локального сейва');
+}
+function updateContinueButton(){
+  const btn = document.getElementById('btn-continue');
+  if (btn) btn.style.display = localHasSave() ? 'block' : 'none';
+}
+
+// ---------- TOAST / MODAL ----------
+function toast(msg){
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;left:50%;bottom:30px;transform:translateX(-50%);'+
+    'background:linear-gradient(180deg,#241d47,#1a1630);border:1px solid #d9b45a;'+
+    'color:#f3d98b;padding:12px 20px;border-radius:10px;font-family:Cinzel,serif;'+
+    'z-index:200;font-size:14px;box-shadow:0 0 20px rgba(217,180,90,.4);pointer-events:none;';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1800);
+}
+
+function showModal(title, text, buttons, extraHTML){
+  const back = document.getElementById('modal-back');
+  const t = document.getElementById('modal-title');
+  const p = document.getElementById('modal-text');
+  const b = document.getElementById('modal-btns');
+  const x = document.getElementById('modal-extra');
+  t.textContent = title;
+  p.textContent = text || '';
+  if (x) x.innerHTML = extraHTML || '';
+  b.innerHTML = '';
+  buttons.forEach(btn => {
+    const el = document.createElement('button');
+    el.className = 'btn' + (btn.cls ? ' ' + btn.cls : '');
+    el.textContent = btn.label;
+    el.onclick = () => {
+      const val = x && x.querySelector('input') ? x.querySelector('input').value : null;
+      if (btn.keepOpen !== true) back.classList.remove('active');
+      btn.fn && btn.fn(val);
+    };
+    b.appendChild(el);
+  });
+  back.classList.add('active');
+}
+
+// ---------- SECRET UNLOCK ----------
+let SECRET_TAPS = 0;
+let SECRET_LAST = 0;
+
+function initSecretTap(){
+  const sub = document.getElementById('subtitle-secret');
+  if (!sub) return;
+  sub.addEventListener('click', () => {
+    const now = Date.now();
+    if (now - SECRET_LAST > 1500) SECRET_TAPS = 0;
+    SECRET_LAST = now;
+    SECRET_TAPS++;
+    if (SECRET_TAPS >= 5){
+      SECRET_TAPS = 0;
+      promptAdminPassword();
+    }
+  });
+}
+
+function promptAdminPassword(){
+  showModal('Доступ', 'Введи пароль администратора.',
+    [
+      {label:'Войти', fn: (v) => {
+        if (v === ADMIN_PASSWORD){
+          IS_ADMIN = true;
+          toast('Админ-доступ открыт');
+          nav('admin');
+        } else {
+          toast('Неверный пароль');
+        }
+      }},
+      {label:'Отмена'}
+    ],
+    '<input type="password" id="adm-pass" placeholder="пароль" autocomplete="off">'
+  );
+  setTimeout(() => {
+    const inp = document.getElementById('adm-pass');
+    if (inp){
+      inp.focus();
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter'){
+          const btn = document.querySelector('#modal-btns .btn');
+          btn && btn.click();
+        }
+      });
+    }
+  }, 50);
+}
+
+function adminExit(){
+  IS_ADMIN = false;
+  ADMIN_CACHE = [];
+  ADMIN_FILTER = '';
+  const s = document.getElementById('adm-search');
+  if (s) s.value = '';
+  nav('menu');
+  toast('Админ-сессия закрыта');
+}
+
+// ---------- ADMIN PANEL ----------
+async function adminLoadAll(){
+  if (!IS_ADMIN){ toast('Нет доступа'); return; }
+  if (!navigator.onLine){ toast('Нет сети'); return; }
+  const list = document.getElementById('adm-list');
+  if (list) list.innerHTML = '<div class="empty-note">Загрузка...</div>';
+  try {
+    const rows = await adminRequest('GET', 'saves?select=user_key,data,updated_at&order=updated_at.desc');
+    ADMIN_CACHE = rows || [];
+    adminRenderStats();
+    adminRender();
+  } catch(e){
+    if (list) list.innerHTML = '<div class="empty-note">Ошибка: ' + (e.message || '') + '</div>';
+  }
+}
+
+function adminRenderStats(){
+  const total = ADMIN_CACHE.length;
+  const gold = ADMIN_CACHE.reduce((s, r) => s + (r.data && r.data.gold || 0), 0);
+  const maxlvl = ADMIN_CACHE.reduce((m, r) => Math.max(m, (r.data && r.data.lvl) || 0), 0);
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('adm-total', total);
+  set('adm-gold', gold);
+  set('adm-maxlvl', maxlvl);
+}
+
+function adminFilter(){
+  const inp = document.getElementById('adm-search');
+  ADMIN_FILTER = inp ? inp.value.trim().toLowerCase() : '';
+  adminRender();
+}
+
+function adminRender(){
+  const list = document.getElementById('adm-list');
+  const shown = document.getElementById('adm-shown');
+  if (!list) return;
+  const filtered = ADMIN_CACHE.filter(r =>
+    !ADMIN_FILTER || r.user_key.toLowerCase().includes(ADMIN_FILTER)
+  );
+  if (shown) shown.textContent = '(' + filtered.length + '/' + ADMIN_CACHE.length + ')';
+  if (!filtered.length){
+    list.innerHTML = '<div class="empty-note">Пусто.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  filtered.forEach(row => {
+    const d = row.data || {};
+    const dt = row.updated_at ? new Date(row.updated_at).toLocaleString('ru-RU') : '—';
+    const el = document.createElement('div');
+    el.className = 'save-row';
+    el.innerHTML = `
+      <span class="uk">${row.user_key}</span>
+      <div class="meta">
+        <span>ур. <b>${d.lvl || '?'}</b></span>
+        <span>HP <b>${d.hp || 0}/${d.hpMax || 0}</b></span>
+        <span>ATK <b>${d.atk || 0}</b></span>
+        <span>DEF <b>${d.def || 0}</b></span>
+        <span>золото <b>${d.gold || 0}</b></span>
+        <span>очки <b>${d.skillPoints || 0}</b></span>
+        <span>акт <b>${(d.act || 0) + 1}</b></span>
+      </div>
+      <div class="meta">обновлён: ${dt}</div>
+      <div class="save-actions">
+        <button class="btn small" data-act="gold">+1000💰</button>
+        <button class="btn small" data-act="lvl">+5 ур.</button>
+        <button class="btn small" data-act="sp">+10 очков</button>
+        <button class="btn small" data-act="view">JSON</button>
+        <button class="btn small danger" data-act="del">Удалить</button>
+      </div>`;
+    el.querySelectorAll('[data-act]').forEach(btn => {
+      btn.onclick = () => adminAction(btn.dataset.act, row);
+    });
+    list.appendChild(el);
+  });
+}
+
+async function adminAction(act, row){
+  if (!IS_ADMIN) return;
+  const uk = row.user_key;
+  try {
+    if (act === 'view'){
+      showModal('Сейв ' + uk.slice(0, 12) + '...',
+        JSON.stringify(row.data, null, 2).slice(0, 1500),
+        [{label:'Закрыть'}]);
+      return;
+    }
+
+    if (act === 'del'){
+      showModal('Удалить сейв?', uk,
+        [
+          {label:'Удалить', cls:'danger', fn: async () => {
+            try {
+              await adminRequest('DELETE', 'saves?user_key=eq.' + encodeURIComponent(uk));
+              toast('Удалён');
+              adminLoadAll();
+            } catch(e){ toast('Ошибка удаления'); }
+          }},
+          {label:'Отмена'}
+        ]);
+      return;
+    }
+
+    const data = row.data || {};
+    if (act === 'gold') data.gold = (data.gold || 0) + 1000;
+    if (act === 'lvl'){
+      data.lvl = (data.lvl || 1) + 5;
+      data.skillPoints = (data.skillPoints || 0) + 5;
+    }
+    if (act === 'sp') data.skillPoints = (data.skillPoints || 0) + 10;
+
+    await adminRequest('PATCH', 'saves?user_key=eq.' + encodeURIComponent(uk), { data });
+    toast('Обновлено');
+    // локально обновим кэш
+    row.data = data;
+    adminRenderStats();
+    adminRender();
+  } catch(e){
+    toast('Ошибка: ' + (e.message || '').slice(0, 40));
+  }
+}
+
+function adminExport(){
+  if (!ADMIN_CACHE.length){ toast('Нечего экспортировать'); return; }
+  const blob = new Blob([JSON.stringify(ADMIN_CACHE, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tенеход_saves_' + Date.now() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Экспортировано');
+}
+
+// ---------- STATE ----------
+const S = {
+  lvl: 1, xp: 0, xpNext: 30,
+  hp: 100, hpMax: 100, mp: 20, mpMax: 20,
+  atk: 10, def: 5,
+  gold: 0, potions: 3, mpPotions: 0,
+  loc: 0, enemy: null, inCombat: false,
+  skillPoints: 0, bought: {}, skills: {},
+  equipment: { weapon: null, armor: null, amulet: null },
+  bag: [],
+  act: 0, chapter: 0, actKills: 0, bossDefeated: false, firstStrike: false
+};
+
+// ---------- DATA ----------
+const LOCS = [
+  { name:'Тёмный лес', icon:'🌲',
+    enemies:[
+      {name:'Лесной волк', icon:'🐺', hp:40, atk:8, def:2, xp:12, gold:8},
+      {name:'Разбойник', icon:'🗡️', hp:50, atk:10, def:3, xp:16, gold:12},
+      {name:'Паук-ткач', icon:'🕷️', hp:35, atk:12, def:1, xp:14, gold:10}
+    ],
+    elite:{name:'Вожак стаи', icon:'🐺', hp:90, atk:16, def:5, xp:40, gold:35},
+    boss:{name:'Древень-душегуб', icon:'🌳', hp:180, atk:22, def:8, xp:100, gold:80}
+  },
+  { name:'Руины замка', icon:'🏰',
+    enemies:[
+      {name:'Скелет-страж', icon:'💀', hp:70, atk:14, def:6, xp:24, gold:16},
+      {name:'Проклятый рыцарь', icon:'⚔️', hp:85, atk:16, def:8, xp:30, gold:22},
+      {name:'Призрак', icon:'👻', hp:60, atk:18, def:3, xp:28, gold:20}
+    ],
+    elite:{name:'Рыцарь-палач', icon:'🪓', hp:150, atk:24, def:10, xp:70, gold:60},
+    boss:{name:'Король-Лич', icon:'👑', hp:300, atk:32, def:14, xp:200, gold:160}
+  },
+  { name:'Пещера теней', icon:'🕳️',
+    enemies:[
+      {name:'Теневой выползок', icon:'🦎', hp:100, atk:22, def:8, xp:40, gold:28},
+      {name:'Пожиратель', icon:'👹', hp:120, atk:24, def:10, xp:48, gold:34},
+      {name:'Безликий', icon:'🎭', hp:90, atk:28, def:6, xp:44, gold:30}
+    ],
+    elite:{name:'Тень-патриарх', icon:'🌑', hp:220, atk:34, def:14, xp:110, gold:95},
+    boss:{name:'Владыка Тени', icon:'😈', hp:500, atk:44, def:20, xp:400, gold:300}
+  }
+];
+
+const SHOP_ITEMS = [
+  {id:'potion', name:'Зелье HP', icon:'🧪', desc:'+40 HP', base:25, repeat:true},
+  {id:'mpotion', name:'Зелье MP', icon:'💧', desc:'+20 MP', base:20, repeat:true},
+  {id:'up_hp', name:'Руна жизни', icon:'❤️', desc:'+20 HP макс', base:60, max:5},
+  {id:'up_atk', name:'Руна силы', icon:'⚔️', desc:'+3 ATK', base:70, max:5},
+  {id:'up_def', name:'Руна стали', icon:'🛡️', desc:'+2 DEF', base:65, max:5},
+  {id:'up_mp', name:'Руна духа', icon:'🔮', desc:'+5 MP макс', base:55, max:5}
+];
+
+const SKILL_TREE = [
+  { branch:'Берсерк', skills:[
+    {id:'rage', name:'Ярость', desc:'+3 ATK', cost:1},
+    {id:'crit', name:'Критический удар', desc:'+8% шанс крита', cost:1},
+    {id:'lastblood', name:'Предсмертная ярость', desc:'+50% ATK при HP < 30%', cost:2}
+  ]},
+  { branch:'Тень', skills:[
+    {id:'dodge', name:'Тень ветра', desc:'+10% уклонение', cost:1},
+    {id:'shadowstrike', name:'Удар из тьмы', desc:'+25% крит, +0.3 множитель', cost:2},
+    {id:'vamp', name:'Вампиризм', desc:'+12% урона в HP', cost:2}
+  ]},
+  { branch:'Маг', skills:[
+    {id:'mp', name:'Источник силы', desc:'+10 MP макс', cost:1},
+    {id:'spell', name:'Мощь заклинаний', desc:'+30% урон магии', cost:1},
+    {id:'medit', name:'Медитация', desc:'+2 MP регенерация', cost:2}
+  ]}
+];
+
+const RARITY = {
+  common:{name:'Обычный'}, rare:{name:'Редкий'},
+  epic:{name:'Эпический'}, legendary:{name:'Легендарный'}
+};
+
+const LOOT_TABLE = [
+  {id:'rusty_blade', name:'Ржавый клинок', slot:'weapon', rarity:'common', bonus:{atk:2}},
+  {id:'steel_sword', name:'Стальной меч', slot:'weapon', rarity:'rare', bonus:{atk:5}},
+  {id:'shadow_dagger', name:'Клинок тени', slot:'weapon', rarity:'epic', bonus:{atk:9, crit:5}},
+  {id:'dusk_edge', name:'Грань сумрака', slot:'weapon', rarity:'legendary', bonus:{atk:15, crit:10, lifesteal:5}},
+  {id:'leather_vest', name:'Кожаный доспех', slot:'armor', rarity:'common', bonus:{def:2}},
+  {id:'chain_mail', name:'Кольчуга', slot:'armor', rarity:'rare', bonus:{def:5, hpMax:15}},
+  {id:'shadow_cloak', name:'Плащ тени', slot:'armor', rarity:'epic', bonus:{def:8, dodge:8}},
+  {id:'eternal_aegis', name:'Вечный эгида', slot:'armor', rarity:'legendary', bonus:{def:14, hpMax:40}},
+  {id:'bone_charm', name:'Костяной оберег', slot:'amulet', rarity:'common', bonus:{hpMax:15}},
+  {id:'arcane_pendant', name:'Магический кулон', slot:'amulet', rarity:'rare', bonus:{mpMax:10, spell:10}},
+  {id:'void_eye', name:'Око пустоты', slot:'amulet', rarity:'epic', bonus:{crit:8, lifesteal:4}},
+  {id:'soul_heart', name:'Сердце душ', slot:'amulet', rarity:'legendary', bonus:{hpMax:50, atk:5, def:5}}
+];
+
+const STORY = [
+  { title:'Пролог',
+    text:'Ты стоял у края Тёмного леса. *Ветер нёс запах мокрой хвои и старого пепла.* Где-то в глубине деревьев мерцал огонь — не костёр, а нечто древнее. Тьма ждала.',
+    choices:[{text:'Войти в лес', next:'act0'},{text:'Обойти стороной', next:'act0_alt'}]},
+  { id:'act0', title:'Акт I — Тёмный лес',
+    text:'Лес принял тебя тихо. *Мхи под ногами дышали сыростью, тени скользили между стволами.* Впереди — поляна, где кто-то оставил знак: косой крест, выжженный на коре.',
+    choices:[{text:'Коснуться знака', next:'act0_touch'},{text:'Пройти мимо', next:'act0_deep'}]},
+  { id:'act0_alt', title:'Акт I — Тёмный лес',
+    text:'Ты вышел к реке. *Вода была чёрной и слишком спокойной.* На том берегу — руины.',
+    choices:[{text:'Перейти реку', next:'act0'},{text:'Идти вдоль берега', next:'act0_deep'}]},
+  { id:'act0_touch', title:'Акт I — Знамение',
+    text:'Кора обожгла пальцы. *Голос — не звук, а дрожь в костях — произнёс твоё имя.* Ты отдёрнул руку. Знак погас.',
+    choices:[{text:'Идти на вой', next:'act0_deep'}]},
+  { id:'act0_deep', title:'Акт I — В чаще',
+    text:'Ты вышел к лагерю. *Три тела, старые, обглоданные.* В центре — колодец, из которого поднимался туман.',
+    choices:[{text:'Заглянуть в колодец', next:'to_game'},{text:'Развернуться', next:'to_game'}]},
+  { id:'to_game', title:'Акт I — Тропа',
+    text:'Ты ступил на тропу. *Позади лес сомкнулся, отрезав путь назад.* Тьма начинается здесь.',
+    choices:[{text:'Идти вперёд', next:'END_STORY_ACT0'}]},
+  { id:'act1_start', title:'Акт II — Руины замка',
+    text:'Тёмный лес отпустил тебя у подножия руин. *Камень был холодным даже сквозь сапоги.* Ты чувствовал взгляд из бойниц.',
+    choices:[{text:'Через главные ворота', next:'act1_gate'},{text:'Найти пролом', next:'act1_breach'}]},
+  { id:'act1_gate', title:'Акт II — Ворота',
+    text:'Створки открылись сами. *Скрип металла резанул по нервам.* В тронном зале на троне сидел человек. Он не дышал — и всё же улыбался.',
+    choices:[{text:'Обнажить клинок', next:'to_game2'}]},
+  { id:'act1_breach', title:'Акт II — Пролом',
+    text:'Ты пробрался через трещину в кладке. *Внутри пахло плесенью и ладаном.* В темноте коридора — цепочка свечей.',
+    choices:[{text:'Идти по свечам', next:'to_game2'}]},
+  { id:'to_game2', title:'Акт II — Трон',
+    text:'Ты прошёл галерею. *Стены были исписаны именами — и среди них твоё.* Замок знал тебя раньше, чем ты вошёл.',
+    choices:[{text:'Идти дальше', next:'END_STORY_ACT1'}]},
+  { id:'act2_start', title:'Акт III — Пещера теней',
+    text:'Пещера открылась за руинами, как рана в земле. *Воздух был вязким, он не двигался.* Там, в глубине, что-то ждёт.',
+    choices:[{text:'Спуститься вниз', next:'act2_descend'},{text:'Осмотреть вход', next:'act2_look'}]},
+  { id:'act2_look', title:'Акт III — Знаки',
+    text:'На камнях у входа — рисунки. *Существа без имён, существа без лиц, и человек с мечом.* Ты. Только старше. И уже мёртвый.',
+    choices:[{text:'Всё равно идти', next:'act2_descend'}]},
+  { id:'act2_descend', title:'Акт III — Глубина',
+    text:'Ты спустился. *Тьма сомкнулась за спиной.* Где-то впереди пульсировал фиолетовый свет — сердце Владыки.',
+    choices:[{text:'Идти на свет', next:'to_game3'}]},
+  { id:'to_game3', title:'Акт III — Сердце тьмы',
+    text:'Ты вышел в зал. *На троне из костей сидел Владыка Тени.* Он заговорил твоим голосом: «Наконец-то. Я долго ждал тебя. Себя.»',
+    choices:[{text:'Поднять оружие', next:'END_STORY_ACT2'}]}
+];
+
+const ENDINGS = {
+  end_take:{ title:'Концовка: Принять тьму',
+    text:'Ты опустил оружие. *Владыка рассыпался пеплом.* Ты сел на трон. Тьма приняла тебя без слов. Теперь ты — тот, кого будут бояться. Навсегда.'},
+  end_break:{ title:'Концовка: Сломать круг',
+    text:'Ты вонзил клинок в собственное сердце — и в сердце Владыки. *Тьма закричала.* Круг разорвался. Лес вздохнул впервые за сотни лет.'},
+  end_leave:{ title:'Концовка: Уйти',
+    text:'Ты развернулся и пошёл назад. *Владыка не остановил тебя.* Тьма осталась в пещере — ждать следующего. Ты вышел под звёзды. Живой. Свободный. Пустой.'}
+};
+
+// ---------- DERIVED STATS ----------
+function equipBonus(key){
+  let sum = 0;
+  for (const slot in S.equipment){
+    const it = S.equipment[slot];
+    if (it && it.bonus && it.bonus[key]) sum += it.bonus[key];
+  }
+  return sum;
+}
+function hasSkill(id){ return !!S.skills[id]; }
+function totalAtk(){
+  let a = S.atk + equipBonus('atk');
+  if (hasSkill('rage')) a += 3;
+  if (hasSkill('lastblood') && S.hp < totalHpMax()*0.3) a = Math.floor(a*1.5);
+  return a;
+}
+function totalDef(){ return S.def + equipBonus('def'); }
+function totalHpMax(){ return S.hpMax + equipBonus('hpMax'); }
+function totalMpMax(){ return S.mpMax + equipBonus('mpMax') + (hasSkill('mp')?10:0); }
+function critChance(){
+  let c = 15 + equipBonus('crit');
+  if (hasSkill('crit')) c += 8;
+  if (hasSkill('shadowstrike')) c += 25;
+  return Math.min(c, 90);
+}
+function critMult(){
+  let m = 1.8;
+  if (hasSkill('shadowstrike')) m += 0.3;
+  return m;
+}
+function dodgeChance(){
+  let d = equipBonus('dodge');
+  if (hasSkill('dodge')) d += 10;
+  return Math.min(d, 60);
+}
+function lifestealPct(){
+  let l = equipBonus('lifesteal');
+  if (hasSkill('vamp')) l += 12;
+  return l;
+}
+function spellMult(){ return hasSkill('spell') ? 1.3 : 1.0; }
+function mpRegen(){ return hasSkill('medit') ? 3 : 1; }
+
+// ---------- ROUTING ----------
+function nav(name){
+  if (name === 'admin' && !IS_ADMIN){
+    toast('Нет доступа');
+    name = 'menu';
+  }
+  location.hash = name;
+}
+function renderScreen(name){
+  if (name === 'admin' && !IS_ADMIN){
+    name = 'menu';
+    if (location.hash !== '#menu') location.hash = 'menu';
+  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+  if (name === 'game') { updateUI(); buildActions(); }
+  if (name === 'shop') renderShop();
+  if (name === 'skills') renderSkills();
+  if (name === 'inventory') renderInventory();
+  if (name === 'menu') updateContinueButton();
+  if (name === 'admin') adminLoadAll();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange', () => {
+  const name = location.hash.slice(1) || 'menu';
+  renderScreen(name);
+});
+
+// ---------- LOG ----------
+function log(msg, cls){
+  const logEl = document.getElementById('log');
+  if (!logEl) return;
+  const p = document.createElement('p');
+  if (cls) p.className = cls;
+  p.innerHTML = msg;
+  logEl.appendChild(p);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog(){
+  const logEl = document.getElementById('log');
+  if (logEl) logEl.innerHTML = '';
+}
+
+// ---------- FLOAT / FLASH ----------
+function floatDamage(targetId, text, color){
+  const arena = document.getElementById('arena');
+  const target = document.getElementById(targetId);
+  if (!arena || !target) return;
+  const rect = target.getBoundingClientRect();
+  const arenaRect = arena.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'float-dmg';
+  el.textContent = text;
+  el.style.color = color || '#ff8b8b';
+  el.style.left = (rect.left - arenaRect.left + rect.width/2 - 20) + 'px';
+  el.style.top = (rect.top - arenaRect.top) + 'px';
+  arena.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+function flashHit(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('hit');
+  setTimeout(() => el.classList.remove('hit'), 240);
+}
+
+// ---------- UI ----------
+function updateUI(){
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  const setw = (id, pct) => { const e = document.getElementById(id); if (e) e.style.width = Math.max(0,Math.min(100,pct)) + '%'; };
+  set('st-lvl', S.lvl); set('st-atk', totalAtk());
+  set('st-def', totalDef()); set('st-gold', S.gold); set('st-sp', S.skillPoints);
+  const hpM = totalHpMax(), mpM = totalMpMax();
+  set('hp-val', `${Math.max(0,S.hp)} / ${hpM}`); setw('hp-fill', S.hp/hpM*100);
+  set('mp-val', `${Math.max(0,S.mp)} / ${mpM}`); setw('mp-fill', S.mp/mpM*100);
+  set('xp-val', `${S.xp} / ${S.xpNext}`); setw('xp-fill', S.xp/S.xpNext*100);
+  setw('player-mini', S.hp/hpM*100);
+  set('loc-name', LOCS[S.loc].name);
+  if (S.enemy){
+    set('foe-name', S.enemy.name);
+    set('foe-av', S.enemy.icon || '👤');
+    const foeTag = document.getElementById('foe-tag');
+    if (foeTag){
+      if (S.enemy.isBoss) foeTag.textContent = '◆ БОСС ◆';
+      else if (S.enemy.isElite) foeTag.textContent = '✦ Элита ✦';
+      else foeTag.textContent = '';
+    }
+    const foeAv = document.getElementById('foe-av');
+    foeAv.className = 'avatar foe' + (S.enemy.isBoss?' boss':(S.enemy.isElite?' elite':''));
+    setw('foe-mini', S.enemy.hp/S.enemy.hpMax*100);
+  }
+}
+function setButtons(list){
+  const actions = document.getElementById('actions');
+  if (!actions) return;
+  actions.innerHTML = '';
+  list.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn' + (b.cls ? ' ' + b.cls : '');
+    btn.textContent = b.label;
+    btn.disabled = !!b.disabled;
+    btn.onclick = b.fn;
+    actions.appendChild(btn);
+  });
+}
+function buildActions(){
+  if (S.inCombat){
+    setButtons([
+      {label:'⚔ Атака', fn: playerAttack},
+      {label:'✨ Магия (5 MP)', fn: playerMagic, disabled: S.mp < 5},
+      {label:'🧪 Зелье HP (' + S.potions + ')', fn: usePotion, disabled: S.potions <= 0},
+      {label:'🏃 Бежать', fn: flee}
+    ]);
+  } else {
+    setButtons([
+      {label:'🗡 Искать врага', fn: findEnemy, cls:'big'},
+      {label:'🏪 Лавка', fn: () => nav('shop')},
+      {label:'📜 Навыки', fn: () => nav('skills')},
+      {label:'🎒 Инвентарь', fn: () => nav('inventory')}
+    ]);
+  }
+}
+
+// ---------- STORY ----------
+function startStory(){
+  S.act = 0; S.chapter = 0;
+  S.hp = totalHpMax(); S.mp = totalMpMax();
+  S.actKills = 0; S.bossDefeated = false;
+  S.enemy = null; S.inCombat = false;
+  clearLog();
+  localSave();
+  nav('story');
+  renderStory(0);
+}
+function renderStory(idx){
+  const node = STORY[idx];
+  if (!node) return;
+  const title = document.getElementById('story-title');
+  const text = document.getElementById('story-text');
+  const choices = document.getElementById('story-choices');
+  if (title) title.textContent = node.title;
+  if (text) text.innerHTML = node.text.replace(/\*(.+?)\*/g, '<i>$1</i>');
+  if (choices){
+    choices.innerHTML = '';
+    node.choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'btn choice';
+      btn.textContent = c.text;
+      btn.onclick = () => handleStoryChoice(c.next);
+      choices.appendChild(btn);
+    });
+  }
+}
+function renderStoryById(id){
+  const idx = STORY.findIndex(n => n.id === id);
+  if (idx >= 0) renderStory(idx);
+}
+function handleStoryChoice(next){
+  if (next === 'END_STORY_ACT0'){ S.act = 0; enterAct(); return; }
+  if (next === 'END_STORY_ACT1'){ S.act = 1; enterAct(); return; }
+  if (next === 'END_STORY_ACT2'){ S.act = 2; enterAct(); return; }
+  if (next.startsWith('end_')){ showEnding(next); return; }
+  renderStoryById(next);
+}
+function enterAct(){
+  S.actKills = 0; S.bossDefeated = false;
+  S.loc = S.act; S.enemy = null; S.inCombat = false;
+  clearLog();
+  log(`<b>${LOCS[S.loc].name}</b> — новый акт.`, 'c-sys');
+  localSave();
+  cloudSave(true);
+  nav('game');
+  updateUI();
+  buildActions();
+}
+function showEnding(id){
+  const end = ENDINGS[id];
+  if (!end) return;
+  const choices = document.getElementById('story-choices');
+  const text = document.getElementById('story-text');
+  const title = document.getElementById('story-title');
+  if (title) title.textContent = end.title;
+  if (text) text.innerHTML = '<div class="ending-text">' + end.text.replace(/\*(.+?)\*/g, '<i>$1</i>') + '</div>';
+  if (choices){
+    choices.innerHTML = '';
+    const btn = document.createElement('button');
+    btn.className = 'btn choice';
+    btn.textContent = 'Вернуться в меню';
+    btn.onclick = () => nav('menu');
+    choices.appendChild(btn);
+  }
+  nav('story');
+}
+
+// ---------- COMBAT ----------
+function findEnemy(){
+  if (S.bossDefeated){ log('Этот акт пройден.', 'c-sys'); return; }
+  if (S.actKills >= 10 && !S.bossDefeated){ spawnBoss(); return; }
+  const loc = LOCS[S.loc];
+  const roll = Math.random();
+  let tmpl, isElite = false;
+  if (roll < 0.12){ tmpl = loc.elite; isElite = true; }
+  else { tmpl = loc.enemies[Math.floor(Math.random()*loc.enemies.length)]; }
+  const e = {
+    name: tmpl.name, icon: tmpl.icon,
+    hp: tmpl.hp, hpMax: tmpl.hp,
+    atk: tmpl.atk, def: tmpl.def,
+    xp: tmpl.xp, gold: tmpl.gold,
+    isElite, isBoss: false
+  };
+  if (isElite){ e.hp = Math.floor(e.hp*2); e.hpMax = e.hp; e.xp *= 2; e.gold *= 2; }
+  S.enemy = e; S.inCombat = true;
+  S.firstStrike = Math.random() < 0.5;
+  clearLog();
+  if (isElite) log(`✦ Элита: ${e.name}.`, 'c-elite');
+  else log(`${e.name} выходит навстречу.`, 'c-sys');
+  updateUI(); buildActions();
+  if (!S.firstStrike) setTimeout(enemyTurn, 600);
+}
+function spawnBoss(){
+  const tmpl = LOCS[S.loc].boss;
+  S.enemy = {
+    name: tmpl.name, icon: tmpl.icon,
+    hp: tmpl.hp, hpMax: tmpl.hp,
+    atk: tmpl.atk, def: tmpl.def,
+    xp: tmpl.xp, gold: tmpl.gold,
+    isBoss: true, isElite: false
+  };
+  S.inCombat = true; S.firstStrike = true;
+  clearLog();
+  log(`◆ БОСС ◆ ${S.enemy.name}.`, 'c-boss');
+  updateUI(); buildActions();
+}
+function playerAttack(){
+  if (!S.inCombat || !S.enemy) return;
+  const e = S.enemy;
+  const isCrit = Math.random()*100 < critChance();
+  let dmg = Math.max(1, totalAtk() - Math.floor(e.def/2));
+  if (isCrit) dmg = Math.floor(dmg * critMult());
+  e.hp -= dmg;
+  flashHit('foe-av');
+  floatDamage('foe-av', (isCrit?'CRIT ':'') + '-' + dmg, isCrit?'#ffbe3d':'#ff8b8b');
+  log(`Ты бьёшь: <span class="${isCrit?'c-crit':'c-dmg'}">-${dmg}${isCrit?' (крит)':''}</span>`, '');
+  const ls = lifestealPct();
+  if (ls > 0){
+    const heal = Math.floor(dmg * ls / 100);
+    if (heal > 0){
+      S.hp = Math.min(totalHpMax(), S.hp + heal);
+      log(`Вампиризм: <span class="c-heal">+${heal} HP</span>`, '');
+    }
+  }
+  updateUI();
+  if (e.hp <= 0){ winFight(); return; }
+  setButtons([]);
+  setTimeout(enemyTurn, 550);
+}
+function playerMagic(){
+  if (!S.inCombat || !S.enemy || S.mp < 5) return;
+  S.mp -= 5;
+  const e = S.enemy;
+  let dmg = Math.max(1, Math.floor(totalAtk() * 2 * spellMult()) - Math.floor(e.def/4));
+  e.hp -= dmg;
+  flashHit('foe-av');
+  floatDamage('foe-av', '-' + dmg, '#b794ff');
+  log(`Магия: <span class="c-loot">-${dmg}</span>`, '');
+  updateUI();
+  if (e.hp <= 0){ winFight(); return; }
+  setButtons([]);
+  setTimeout(enemyTurn, 550);
+}
+function usePotion(){
+  if (S.potions <= 0) return;
+  S.potions--;
+  S.hp = Math.min(totalHpMax(), S.hp + 40);
+  log(`Зелье: <span class="c-heal">+40 HP</span>`, '');
+  updateUI(); buildActions();
+}
+function flee(){
+  if (!S.inCombat) return;
+  if (Math.random()*100 < 55){
+    log('Ты отступаешь в тень.', 'c-sys');
+    S.enemy = null; S.inCombat = false;
+    localSave();
+    updateUI(); buildActions();
+  } else {
+    log('Отступление не удалось.', 'c-dmg');
+    setButtons([]);
+    setTimeout(enemyTurn, 550);
+  }
+}
+function enemyTurn(){
+  if (!S.inCombat || !S.enemy) return;
+  const e = S.enemy;
+  if (Math.random()*100 < dodgeChance()){
+    log(`Уклонение от ${e.name}.`, 'c-sys');
+    updateUI(); buildActions();
+    return;
+  }
+  const isCrit = Math.random()*100 < 12;
+  let dmg = Math.max(1, e.atk - Math.floor(totalDef()/2));
+  if (isCrit) dmg = Math.floor(dmg * 1.6);
+  S.hp -= dmg;
+  flashHit('player-av');
+  floatDamage('player-av', '-' + dmg, '#ff8b8b');
+  log(`${e.name} бьёт: <span class="${isCrit?'c-crit':'c-dmg'}">-${dmg}${isCrit?' (крит)':''}</span>`, '');
+  S.mp = Math.min(totalMpMax(), S.mp + mpRegen());
+  updateUI();
+  if (S.hp <= 0){ loseFight(); return; }
+  buildActions();
+}
+function winFight(){
+  const e = S.enemy;
+  S.inCombat = false; S.actKills++;
+  log(`<span class="c-level">Победа над ${e.name}.</span>`, '');
+  S.gold += e.gold; log(`+${e.gold} золота`, 'c-gold');
+  S.xp += e.xp; log(`+${e.xp} XP`, 'c-level');
+  const dropChance = e.isBoss ? 100 : (e.isElite ? 55 : 20);
+  if (Math.random()*100 < dropChance) dropLoot(e.isBoss);
+  if (e.isBoss){
+    S.bossDefeated = true;
+    log(`◆ Босс повержен.`, 'c-boss');
+    setTimeout(() => advanceAct(), 800);
+  }
+  checkLevelUp();
+  S.enemy = null;
+  updateUI(); buildActions();
+  localSave();
+  cloudSave(true);
+}
+function loseFight(){
+  S.inCombat = false; S.enemy = null;
+  S.hp = Math.floor(totalHpMax()/2);
+  log(`<span class="c-dmg">Ты падаешь.</span>`, '');
+  log(`Очнулся с половиной HP. Золото потеряно вдвое.`, 'c-sys');
+  S.gold = Math.floor(S.gold/2);
+  updateUI(); buildActions();
+  localSave(); cloudSave(true);
+}
+function dropLoot(guaranteed){
+  const roll = Math.random();
+  let rarity;
+  if (guaranteed) rarity = roll < 0.4 ? 'epic' : (roll < 0.85 ? 'rare' : 'legendary');
+  else rarity = roll < 0.55 ? 'common' : (roll < 0.85 ? 'rare' : (roll < 0.97 ? 'epic' : 'legendary'));
+  const pool = LOOT_TABLE.filter(i => i.rarity === rarity);
+  if (!pool.length) return;
+  const item = pool[Math.floor(Math.random()*pool.length)];
+  S.bag.push({...item});
+  log(`<span class="c-loot">Найдено: ${item.name} (${RARITY[rarity].name})</span>`, '');
+}
+function checkLevelUp(){
+  while (S.xp >= S.xpNext){
+    S.xp -= S.xpNext;
+    S.lvl++; S.skillPoints++;
+    S.xpNext = Math.floor(S.xpNext * 1.5);
+    S.hpMax += 10; S.mpMax += 3;
+    S.atk += 2; S.def += 1;
+    S.hp = totalHpMax(); S.mp = totalMpMax();
+    log(`<span class="c-level">Уровень ${S.lvl}! +1 очко навыка.</span>`, '');
+  }
+}
+function advanceAct(){
+  if (S.act === 0){ renderStoryById('act1_start'); nav('story'); }
+  else if (S.act === 1){ renderStoryById('act2_start'); nav('story'); }
+  else { showFinalChoice(); }
+}
+function showFinalChoice(){
+  const title = document.getElementById('story-title');
+  const text = document.getElementById('story-text');
+  const choices = document.getElementById('story-choices');
+  if (title) title.textContent = 'Финал';
+  if (text) text.innerHTML = 'Владыка Тени повержен. *Тьма ждёт твоего решения.*';
+  if (choices){
+    choices.innerHTML = '';
+    [
+      {text:'Принять тьму', end:'end_take'},
+      {text:'Сломать круг', end:'end_break'},
+      {text:'Уйти', end:'end_leave'}
+    ].forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'btn choice';
+      btn.textContent = c.text;
+      btn.onclick = () => showEnding(c.end);
+      choices.appendChild(btn);
+    });
+  }
+  nav('story');
+}
+
+// ---------- SHOP ----------
+function priceOf(item){
+  if (item.repeat) return item.base;
+  const bought = S.bought[item.id] || 0;
+  return Math.floor(item.base * (1 + bought * 0.6));
+}
+function renderShop(){
+  const gold = document.getElementById('shop-gold');
+  if (gold) gold.textContent = S.gold;
+  const list = document.getElementById('shop-list');
+  if (!list) return;
+  list.innerHTML = '';
+  SHOP_ITEMS.forEach(item => {
+    const bought = S.bought[item.id] || 0;
+    const maxed = item.max && bought >= item.max;
+    const price = priceOf(item);
+    const row = document.createElement('div');
+    row.className = 'shop-item';
+    row.innerHTML = `
+      <div class="shop-info">
+        <div class="shop-name">${item.icon || ''} ${item.name}${item.max ? ' ['+bought+'/'+item.max+']' : ''}</div>
+        <div class="shop-desc">${item.desc}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="shop-price">${price} зол.</div>
+        <button class="btn buy-btn" ${maxed || S.gold < price ? 'disabled' : ''} data-id="${item.id}">
+          ${maxed ? 'Макс' : 'Купить'}
+        </button>
+      </div>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.buy-btn').forEach(btn => {
+    btn.onclick = () => buyItem(btn.dataset.id);
+  });
+}
+function buyItem(id){
+  const item = SHOP_ITEMS.find(i => i.id === id);
+  if (!item) return;
+  const bought = S.bought[id] || 0;
+  if (item.max && bought >= item.max) return;
+  const price = priceOf(item);
+  if (S.gold < price) return;
+  S.gold -= price;
+  if (item.repeat){
+    if (id === 'potion') S.potions++;
+    if (id === 'mpotion') S.mpPotions = (S.mpPotions||0) + 1;
+  } else {
+    S.bought[id] = bought + 1;
+    if (id === 'up_hp') S.hpMax += 20;
+    if (id === 'up_atk') S.atk += 3;
+    if (id === 'up_def') S.def += 2;
+    if (id === 'up_mp') S.mpMax += 5;
+  }
+  localSave();
+  renderShop(); updateUI();
+}
+
+// ---------- SKILLS ----------
+function renderSkills(){
+  const pts = document.getElementById('skill-points');
+  if (pts) pts.textContent = S.skillPoints;
+  const tree = document.getElementById('skill-tree');
+  if (!tree) return;
+  tree.innerHTML = '';
+  SKILL_TREE.forEach(branch => {
+    const wrap = document.createElement('div');
+    wrap.className = 'branch';
+    wrap.innerHTML = `<div class="branch-title">${branch.branch}</div>`;
+    branch.skills.forEach(sk => {
+      const owned = hasSkill(sk.id);
+      const row = document.createElement('div');
+      row.className = 'skill' + (owned ? ' owned' : '');
+      row.innerHTML = `
+        <div class="skill-info">
+          <div class="skill-name">${sk.name}</div>
+          <div class="skill-desc">${sk.desc} · стоимость ${sk.cost}</div>
+        </div>
+        <button class="btn skill-btn" ${owned || S.skillPoints < sk.cost ? 'disabled' : ''} data-id="${sk.id}">
+          ${owned ? '✓ Изучено' : 'Изучить'}
+        </button>`;
+      wrap.appendChild(row);
+    });
+    tree.appendChild(wrap);
+  });
+  tree.querySelectorAll('.skill-btn').forEach(btn => {
+    btn.onclick = () => learnSkill(btn.dataset.id);
+  });
+}
+function learnSkill(id){
+  if (hasSkill(id)) return;
+  let found = null;
+  SKILL_TREE.forEach(b => b.skills.forEach(s => { if (s.id === id) found = s; }));
+  if (!found || S.skillPoints < found.cost) return;
+  S.skillPoints -= found.cost;
+  S.skills[id] = true;
+  if (id === 'mp') S.mp = Math.min(totalMpMax(), S.mp + 10);
+  localSave(); cloudSave(true);
+  renderSkills(); updateUI();
+}
+
+// ---------- INVENTORY ----------
+function renderInventory(){
+  ['weapon','armor','amulet'].forEach(slot => {
+    const el = document.getElementById('slot-' + slot);
+    if (!el) return;
+    const it = S.equipment[slot];
+    const itemEl = el.querySelector('.slot-item');
+    if (it){ el.classList.add('filled'); if (itemEl) itemEl.textContent = it.name; }
+    else { el.classList.remove('filled'); if (itemEl) itemEl.textContent = '—'; }
+  });
+  const list = document.getElementById('inventory-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!S.bag.length){
+    list.innerHTML = '<div class="empty-note">Сумка пуста.</div>';
+    return;
+  }
+  S.bag.forEach((item, idx) => {
+    const bonusTxt = Object.entries(item.bonus).map(([k,v]) => {
+      const map = {atk:'ATK', def:'DEF', hpMax:'HP', mpMax:'MP', crit:'КРИТ%',
+        dodge:'УКЛ%', lifesteal:'ВАМП%', spell:'МАГ%'};
+      return `+${v} ${map[k]||k}`;
+    }).join(', ');
+    const row = document.createElement('div');
+    row.className = 'inv-item rar-' + item.rarity;
+    row.innerHTML = `
+      <div>
+        <div class="inv-name">${item.name}</div>
+        <div class="inv-bonus">${bonusTxt} · ${RARITY[item.rarity].name}</div>
+      </div>
+      <button class="btn inv-btn" data-idx="${idx}">Надеть</button>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.inv-btn').forEach(btn => {
+    btn.onclick = () => equipItem(parseInt(btn.dataset.idx));
+  });
+}
+function equipItem(idx){
+  const item = S.bag[idx];
+  if (!item) return;
+  const old = S.equipment[item.slot];
+  S.equipment[item.slot] = item;
+  S.bag.splice(idx, 1);
+  if (old) S.bag.push(old);
+  S.hp = Math.min(S.hp, totalHpMax());
+  S.mp = Math.min(S.mp, totalMpMax());
+  localSave(); cloudSave(true);
+  renderInventory(); updateUI();
+}
+
+// ---------- RESET ----------
+function resetGame(){
+  Object.assign(S, {
+    lvl:1, xp:0, xpNext:30, hp:100, hpMax:100, mp:20, mpMax:20,
+    atk:10, def:5, gold:0, potions:3, mpPotions:0,
+    loc:0, enemy:null, inCombat:false, skillPoints:0,
+    bought:{}, skills:{},
+    equipment:{weapon:null, armor:null, amulet:null},
+    bag:[], act:0, chapter:0, actKills:0, bossDefeated:false, firstStrike:false
+  });
+  localSave();
+}
+
+// ---------- BOOT ----------
+(function(){
+  initCloud();
+  initSecretTap();
+  updateContinueButton();
+  const name = location.hash.slice(1) || 'menu';
+  renderScreen(name);
+  window.addEventListener('online', () => pingCloud());
+  window.addEventListener('offline', () => setCloudStatus('error', 'облако: оффлайн'));
+})();
+</script>
+</body>
+</html>
